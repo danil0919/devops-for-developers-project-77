@@ -21,3 +21,15 @@ variable "ssh_public_key_path" {
 variable "certificate_id" {
   description = "Existing certificate in Yandex Certificate Manager"
 }
+
+variable "datadog_api_key" {
+  sensitive = true
+}
+
+variable "datadog_app_key" {
+  sensitive = true
+}
+
+variable "datadog_api_url" {
+  default = "https://api.datadoghq.eu/"
+}
