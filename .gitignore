@@ -1,4 +1,6 @@
 .terraform
 *.auto.tfvars
 *.backup
+terraform.tfstate
+terraform.tfstate.backup
 secrets/terraform.vault.yml

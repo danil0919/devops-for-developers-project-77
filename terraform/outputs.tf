@@ -23,9 +23,5 @@ output "focalboard2_private_ip" {
 }
 
 output "load_balancer_ip" {
-  value = one(flatten([
-    for listener in yandex_lb_network_load_balancer.lb.listener : [
-      for addr in listener.external_address_spec : addr.address
-    ]
-  ]))
+  value = yandex_vpc_address.alb_ip.external_ipv4_address[0].address
 }

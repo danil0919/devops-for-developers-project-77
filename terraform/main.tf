@@ -106,74 +106,144 @@ resource "yandex_compute_instance" "focalboard2" {
 
 }
 
-############################################
-# LOAD BALANCER TARGET GROUP
-############################################
+resource "yandex_vpc_address" "alb_ip" {
+  name = "focalboard-alb-ip"
 
-resource "yandex_lb_target_group" "focalboard" {
-
-  name = "focalboard-group"
-
-  target {
-    subnet_id = yandex_vpc_subnet.subnet.id
-    address   = yandex_compute_instance.focalboard1.network_interface.0.ip_address
+  external_ipv4_address {
+    zone_id = "ru-central1-a"
   }
-
-  target {
-    subnet_id = yandex_vpc_subnet.subnet.id
-    address   = yandex_compute_instance.focalboard2.network_interface.0.ip_address
-  }
-
 }
 
-############################################
-# NETWORK LOAD BALANCER
-############################################
+resource "yandex_alb_target_group" "focalboard" {
+  name = "focalboard-alb-tg"
 
-resource "yandex_lb_network_load_balancer" "lb" {
-  name = "focalboard-lb"
-
-  listener {
-    name        = "http"
-    port        = 80
-    target_port = 8000
-
-    external_address_spec {
-      ip_version = "ipv4"
-    }
+  target {
+    subnet_id  = yandex_vpc_subnet.subnet.id
+    ip_address = yandex_compute_instance.focalboard1.network_interface.0.ip_address
   }
 
-  attached_target_group {
-    target_group_id = yandex_lb_target_group.focalboard.id
+  target {
+    subnet_id  = yandex_vpc_subnet.subnet.id
+    ip_address = yandex_compute_instance.focalboard2.network_interface.0.ip_address
+  }
+}
+
+resource "yandex_alb_backend_group" "focalboard" {
+  name = "focalboard-backend-group"
+
+  http_backend {
+    name             = "focalboard-http-backend"
+    port             = 8000
+    target_group_ids = [yandex_alb_target_group.focalboard.id]
+    weight           = 1
+
+    load_balancing_config {
+      panic_threshold = 50
+    }
 
     healthcheck {
-      name = "http"
+      timeout          = "5s"
+      interval         = "10s"
+      healthcheck_port = 8000
 
-      http_options {
-        port = 8000
+      http_healthcheck {
         path = "/"
       }
     }
   }
 }
 
-############################################
-# DNS
-############################################
+resource "yandex_alb_http_router" "focalboard" {
+  name = "focalboard-router"
+}
+
+
+resource "yandex_alb_virtual_host" "focalboard" {
+  name           = "focalboard-vhost"
+  http_router_id = yandex_alb_http_router.focalboard.id
+  authority      = [var.domain]
+
+  route {
+    name = "focalboard-route"
+
+    http_route {
+      http_route_action {
+        backend_group_id = yandex_alb_backend_group.focalboard.id
+        timeout          = "60s"
+      }
+    }
+  }
+}
+
+
+resource "yandex_alb_load_balancer" "focalboard" {
+  name       = "focalboard-alb"
+  network_id = data.yandex_vpc_network.existing.id
+
+        depends_on = [
+    yandex_alb_backend_group.focalboard
+  ]
+
+  allocation_policy {
+    location {
+      zone_id   = "ru-central1-a"
+      subnet_id = yandex_vpc_subnet.subnet.id
+    }
+  }
+
+  listener {
+    name = "http"
+
+    endpoint {
+      address {
+        external_ipv4_address {
+          address = yandex_vpc_address.alb_ip.external_ipv4_address[0].address
+        }
+      }
+
+      ports = [80]
+    }
+
+    http {
+      redirects {
+        http_to_https = true
+      }
+    }
+  }
+
+    listener {
+    name = "https"
+
+    endpoint {
+        address {
+        external_ipv4_address {
+            address = yandex_vpc_address.alb_ip.external_ipv4_address[0].address
+        }
+        }
+
+        ports = [443]
+    }
+
+    tls {
+        default_handler {
+        certificate_ids = [var.certificate_id]
+
+        http_handler {
+            http_router_id = yandex_alb_http_router.focalboard.id
+        }
+        }
+    }
+    }
+}
+
 
 resource "yandex_dns_recordset" "focalboard" {
-
   zone_id = var.dns_zone_id
   name    = "${var.domain}."
   type    = "A"
   ttl     = 300
 
-data = [
-  one(flatten([
-    for listener in yandex_lb_network_load_balancer.lb.listener : [
-      for addr in listener.external_address_spec : addr.address
-    ]
-  ]))
-]
-
+  data = [
+    yandex_vpc_address.alb_ip.external_ipv4_address[0].address
+  ]
 }

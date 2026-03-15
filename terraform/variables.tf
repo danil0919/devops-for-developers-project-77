@@ -17,3 +17,7 @@ variable "domain" {
 variable "ssh_public_key_path" {
   default = "~/.ssh/id_rsa.pub"
 }
+
+variable "certificate_id" {
+  description = "Existing certificate in Yandex Certificate Manager"
+}
