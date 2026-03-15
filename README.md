@@ -2,6 +2,10 @@
 [![Actions Status](https://github.com/danil0919/devops-for-developers-project-77/actions/workflows/hexlet-check.yml/badge.svg)](https://github.com/danil0919/devops-for-developers-project-77/actions)
 
 
+Приложение доступно по:
+
+https://cheap-domen-for-devops-education.asia
+
 # DevOps Focalboard Infrastructure
 
 Учебный DevOps-проект для развёртывания **Mattermost Focalboard** в **Yandex Cloud**.
@@ -70,8 +74,3 @@ make infra
 ```bash
 make deploy-app
 ```
-
-
-Приложение доступно по:
-
-https://cheap-domen-for-devops-education.asia
