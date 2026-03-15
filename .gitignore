@@ -4,4 +4,4 @@
 terraform.tfstate
 terraform.tfstate.backup
 secrets/terraform.vault.yml
-*.vault.yml
+ansible/group_vars/all/vault.yml
