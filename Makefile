@@ -24,6 +24,10 @@ deploy-postgres:
 deploy-focalboard:
 	cd ansible && ansible-playbook playbooks/focalboard.yml --ask-vault-pass
 
+deploy-datadog:
+	cd ansible && ansible-playbook playbooks/datadog.yml --ask-vault-pass
+
 deploy-app:
 	make deploy-postgres
 	make deploy-focalboard
+	make deploy-datadog
