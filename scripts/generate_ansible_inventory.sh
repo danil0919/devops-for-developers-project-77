@@ -12,8 +12,6 @@ TF_JSON="$(cd "$TERRAFORM_DIR" && terraform output -json)"
 
 postgres_ip="$(echo "$TF_JSON" | jq -r '.postgres_ip.value')"
 postgres_private_ip="$(echo "$TF_JSON" | jq -r '.postgres_private_ip.value')"
-focalboard1_ip="$(echo "$TF_JSON" | jq -r '.focalboard1_ip.value')"
-focalboard2_ip="$(echo "$TF_JSON" | jq -r '.focalboard2_ip.value')"
 load_balancer_ip="$(echo "$TF_JSON" | jq -r '.load_balancer_ip.value')"
 
 cat > "$INVENTORY_FILE" <<EOF
@@ -21,8 +19,13 @@ cat > "$INVENTORY_FILE" <<EOF
 postgres-1 ansible_host=$postgres_ip ansible_user=ubuntu private_ip=$postgres_private_ip
 
 [focalboard]
-focalboard-1 ansible_host=$focalboard1_ip ansible_user=ubuntu
-focalboard-2 ansible_host=$focalboard2_ip ansible_user=ubuntu
+EOF
+
+echo "$TF_JSON" | jq -r '.focalboard_ips.value[]' | nl -v1 -w1 -s' ' | while read -r idx ip; do
+  echo "focalboard-$idx ansible_host=$ip ansible_user=ubuntu" >> "$INVENTORY_FILE"
+done
+
+cat >> "$INVENTORY_FILE" <<EOF
 
 [all:vars]
 ansible_python_interpreter=/usr/bin/python3

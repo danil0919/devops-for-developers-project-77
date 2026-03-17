@@ -33,3 +33,7 @@ variable "datadog_app_key" {
 variable "datadog_api_url" {
   default = "https://api.datadoghq.eu/"
 }
+
+variable "focalboard_count" {
+  default = 2
+}

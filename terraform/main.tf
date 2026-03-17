@@ -1,11 +1,7 @@
-data "yandex_vpc_network" "existing" {
-  network_id = var.yc_network_id
-}
-
 resource "yandex_vpc_subnet" "subnet" {
   name           = "devops-education-subnet"
   zone           = "ru-central1-a"
-  network_id     = data.yandex_vpc_network.existing.id
+  network_id     = var.yc_network_id
   v4_cidr_blocks = ["10.10.0.0/24"]
 }
 
@@ -45,12 +41,13 @@ resource "yandex_compute_instance" "postgres" {
 }
 
 ############################################
-# FOCALBOARD VM 1
+# FOCALBOARD VM
 ############################################
 
-resource "yandex_compute_instance" "focalboard1" {
+resource "yandex_compute_instance" "focalboard" {
+  count = var.focalboard_count
 
-  name = "focalboard-1"
+  name = "focalboard-${count.index + 1}"
 
   resources {
     cores  = 2
@@ -72,38 +69,6 @@ resource "yandex_compute_instance" "focalboard1" {
   metadata = {
     ssh-keys = "ubuntu:${file(var.ssh_public_key_path)}"
   }
-
-}
-
-############################################
-# FOCALBOARD VM 2
-############################################
-
-resource "yandex_compute_instance" "focalboard2" {
-
-  name = "focalboard-2"
-
-  resources {
-    cores  = 2
-    memory = 2
-  }
-
-  boot_disk {
-    initialize_params {
-      image_id = data.yandex_compute_image.ubuntu.id
-      size     = 20
-    }
-  }
-
-  network_interface {
-    subnet_id = yandex_vpc_subnet.subnet.id
-    nat       = true
-  }
-
-  metadata = {
-    ssh-keys = "ubuntu:${file(var.ssh_public_key_path)}"
-  }
-
 }
 
 resource "yandex_vpc_address" "alb_ip" {
@@ -117,14 +82,13 @@ resource "yandex_vpc_address" "alb_ip" {
 resource "yandex_alb_target_group" "focalboard" {
   name = "focalboard-alb-tg"
 
-  target {
-    subnet_id  = yandex_vpc_subnet.subnet.id
-    ip_address = yandex_compute_instance.focalboard1.network_interface.0.ip_address
-  }
+  dynamic "target" {
+    for_each = yandex_compute_instance.focalboard
 
-  target {
-    subnet_id  = yandex_vpc_subnet.subnet.id
-    ip_address = yandex_compute_instance.focalboard2.network_interface.0.ip_address
+    content {
+      subnet_id  = yandex_vpc_subnet.subnet.id
+      ip_address = target.value.network_interface[0].ip_address
+    }
   }
 }
 
@@ -178,7 +142,7 @@ resource "yandex_alb_virtual_host" "focalboard" {
 
 resource "yandex_alb_load_balancer" "focalboard" {
   name       = "focalboard-alb"
-  network_id = data.yandex_vpc_network.existing.id
+  network_id = var.yc_network_id
 
         depends_on = [
     yandex_alb_backend_group.focalboard

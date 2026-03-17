@@ -1,33 +1,31 @@
-terraform-init:
-	cd terraform && terraform init
+.PHONY: infra destroy generate-inventory ansible-ping deploy-app deploy-postgres deploy-focalboard deploy-datadog deploy
 
-terraform-apply:
-	cd terraform && terraform apply -auto-approve
+infra:
+	$(MAKE) -C terraform init
+	$(MAKE) -C terraform apply
+	$(MAKE) generate-inventory
 
-terraform-destroy:
-	cd terraform && terraform destroy -auto-approve
+destroy:
+	$(MAKE) -C terraform destroy
 
 generate-inventory:
 	./scripts/generate_ansible_inventory.sh
 
-infra:
-	make terraform-init
-	make terraform-apply
-	make generate-inventory
-
 ansible-ping:
-	cd ansible && ansible all -m ping
+	$(MAKE) -C ansible ping
 
 deploy-postgres:
-	cd ansible && ansible-playbook playbooks/postgres.yml --ask-vault-pass
+	$(MAKE) -C ansible deploy-postgres
 
 deploy-focalboard:
-	cd ansible && ansible-playbook playbooks/focalboard.yml --ask-vault-pass
+	$(MAKE) -C ansible deploy-focalboard
 
 deploy-datadog:
-	cd ansible && ansible-playbook playbooks/datadog.yml --ask-vault-pass
+	$(MAKE) -C ansible deploy-datadog
 
 deploy-app:
-	make deploy-postgres
-	make deploy-focalboard
-	make deploy-datadog
+	$(MAKE) -C ansible deploy-app
+
+deploy:
+	$(MAKE) infra
+	$(MAKE) deploy-app
