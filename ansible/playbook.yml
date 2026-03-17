@@ -9,7 +9,7 @@
 
   tasks:
     - name: Install Docker
-      ansible.builtin.include_tasks: tasks/install_docker.yml
+      ansible.builtin.include_tasks: playbooks/tasks/install_docker.yml
       tags: postgres
 
     - name: Create postgres data directory
