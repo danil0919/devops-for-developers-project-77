@@ -1,6 +1,0 @@
-- name: Install Datadog Agent
-  hosts: focalboard
-  become: true
-
-  roles:
-    - role: datadog.dd.agent

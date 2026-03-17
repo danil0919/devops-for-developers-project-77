@@ -4,15 +4,13 @@ ping:
 	ansible all -m ping
 
 deploy-postgres:
-	ansible-playbook playbooks/postgres.yml --ask-vault-pass
+	ansible-playbook playbooks/playbook.yml --tags postgres --ask-vault-pass
 
 deploy-focalboard:
-	ansible-playbook playbooks/focalboard.yml --ask-vault-pass
+	ansible-playbook playbooks/playbook.yml --tags focalboard --ask-vault-pass
 
 deploy-datadog:
-	ansible-playbook playbooks/datadog.yml --ask-vault-pass
+	ansible-playbook playbooks/playbook.yml --tags datadog --ask-vault-pass
 
 deploy-app:
-	$(MAKE) deploy-postgres
-	$(MAKE) deploy-focalboard
-	$(MAKE) deploy-datadog
+	ansible-playbook playbooks/playbook.yml --ask-vault-pass

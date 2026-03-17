@@ -1,0 +1,99 @@
+---
+############################################
+# POSTGRES
+############################################
+- name: Setup PostgreSQL
+  hosts: postgres
+  become: true
+  tags: postgres
+
+  tasks:
+    - name: Install Docker
+      ansible.builtin.include_tasks: tasks/install_docker.yml
+      tags: postgres
+
+    - name: Create postgres data directory
+      ansible.builtin.file:
+        path: "{{ postgres_data_dir }}"
+        state: directory
+        mode: "0755"
+      tags: postgres
+
+    - name: Remove existing postgres container
+      community.docker.docker_container:
+        name: "{{ postgres_container_name }}"
+        state: absent
+      tags: postgres
+
+    - name: Run postgres container
+      community.docker.docker_container:
+        name: "{{ postgres_container_name }}"
+        image: "{{ postgres_image }}"
+        state: started
+        restart_policy: unless-stopped
+        published_ports:
+          - "{{ postgres_port }}:5432"
+        env:
+          POSTGRES_DB: "{{ postgres_db }}"
+          POSTGRES_USER: "{{ postgres_user }}"
+          POSTGRES_PASSWORD: "{{ postgres_password }}"
+        volumes:
+          - "{{ postgres_data_dir }}:/var/lib/postgresql/data"
+      tags: postgres
+
+############################################
+# FOCALBOARD
+############################################
+- name: Setup Focalboard
+  hosts: focalboard
+  become: true
+  tags: focalboard
+
+  vars:
+    postgres_host: "{{ postgres_private_ip }}"
+
+  tasks:
+    - name: Install Docker
+      ansible.builtin.include_tasks: tasks/install_docker.yml
+      tags: focalboard
+
+    - name: Create focalboard data directory
+      ansible.builtin.file:
+        path: "{{ focalboard_data_dir }}"
+        state: directory
+        mode: "0755"
+      tags: focalboard
+
+    - name: Remove existing focalboard container
+      community.docker.docker_container:
+        name: "{{ focalboard_container_name }}"
+        state: absent
+      tags: focalboard
+
+    - name: Run focalboard container
+      community.docker.docker_container:
+        name: "{{ focalboard_container_name }}"
+        image: "{{ focalboard_image }}"
+        state: started
+        restart_policy: unless-stopped
+        published_ports:
+          - "{{ focalboard_port }}:8000"
+        volumes:
+          - "{{ focalboard_data_dir }}:/opt/focalboard/data"
+        command: >
+          /opt/focalboard/bin/focalboard-server
+          --port=8000
+          --dbtype=postgres
+          --dbconfig=postgres://{{ postgres_user }}:{{ postgres_password }}@{{ postgres_host }}:5432/{{ postgres_db }}?sslmode=disable
+      tags: focalboard
+
+############################################
+# DATADOG
+############################################
+- name: Install Datadog Agent
+  hosts: focalboard
+  become: true
+  tags: datadog
+
+  roles:
+    - role: datadog.dd.agent
