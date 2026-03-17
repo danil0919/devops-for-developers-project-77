@@ -3,9 +3,6 @@
   hosts: focalboard
   become: true
 
-  vars:
-    postgres_host: "{{ postgres_private_ip }}"
-
   tasks:
     - name: Install required apt packages
       ansible.builtin.apt:

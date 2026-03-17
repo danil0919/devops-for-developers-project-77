@@ -16,7 +16,7 @@ load_balancer_ip="$(echo "$TF_JSON" | jq -r '.load_balancer_ip.value')"
 
 cat > "$INVENTORY_FILE" <<EOF
 [postgres]
-postgres-1 ansible_host=$postgres_ip ansible_user=ubuntu private_ip=$postgres_private_ip
+postgres-1 ansible_host=$postgres_ip ansible_user=ubuntu
 
 [focalboard]
 EOF
@@ -29,7 +29,7 @@ cat >> "$INVENTORY_FILE" <<EOF
 
 [all:vars]
 ansible_python_interpreter=/usr/bin/python3
-postgres_private_ip=$postgres_private_ip
+postgres_host=$postgres_private_ip
 load_balancer_ip=$load_balancer_ip
 EOF
 
