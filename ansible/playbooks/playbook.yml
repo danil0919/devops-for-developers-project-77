@@ -49,9 +49,6 @@
   become: true
   tags: focalboard
 
-  vars:
-    postgres_host: "{{ postgres_private_ip }}"
-
   tasks:
     - name: Install Docker
       ansible.builtin.include_tasks: tasks/install_docker.yml
