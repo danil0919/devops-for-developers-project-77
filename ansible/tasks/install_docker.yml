@@ -43,4 +43,3 @@
     name: docker
     enabled: true
     state: started
-    
