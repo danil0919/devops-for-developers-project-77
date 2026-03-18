@@ -3,6 +3,4 @@
 *.backup
 terraform.tfstate
 terraform.tfstate.backup
-secrets/terraform.vault.yml
-ansible/group_vars/all/vault.yml
 *.terraform.lock.hcl

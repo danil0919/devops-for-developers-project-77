@@ -1,4 +1,10 @@
-.PHONY: infra destroy generate-inventory ansible-ping deploy-app deploy-postgres deploy-focalboard deploy-datadog deploy
+.PHONY: infra destroy generate-inventory ansible-ping deploy-app deploy-postgres deploy-focalboard deploy-datadog deploy decrypt-terraform-secrets
+
+
+decrypt-terraform-secrets:
+	@ansible-vault decrypt secrets/terraform.vault.yml
+	@cp secrets/terraform.vault.yml terraform/secret.auto.tfvars
+	@ansible-vault encrypt secrets/terraform.vault.yml
 
 infra:
 	$(MAKE) -C terraform init

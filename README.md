@@ -78,6 +78,11 @@ ansible-vault encrypt ansible/group_vars/all/vault.yml
 ansible-vault encrypt secrets/terraform.vault.yml
 ```
 
+И введите команду, формирующую секреты терраформ:
+```bash
+decrypt-terraform-secrets
+```
+
 ### Описание переменных
 
 | Variable | Description |
