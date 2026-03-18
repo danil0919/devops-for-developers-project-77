@@ -94,3 +94,4 @@
 
   roles:
     - role: datadog.dd.agent
+    
